@@ -1,0 +1,35 @@
+{%- comment -%}
+  Forwarding page for the old addresses listed in a page's `redirect_from`
+  (for example /kuldeep-prajapat/research/ -> /research/).
+
+  This layout replaces the built-in template of jekyll-redirect-from, which adds
+  <meta name="robots" content="noindex">. With that tag, Google reported every old
+  address as "Excluded by 'noindex' tag" instead of following it to the new page.
+
+  GitHub Pages can't send HTTP 301 redirects, so every signal below names the new address:
+    - an instant meta refresh, which Google treats as a permanent redirect;
+    - a rel="canonical" link;
+    - a JavaScript redirect for visitors, which keeps any #section of the old link.
+  The plugin keeps these pages out of sitemap.xml. scripts/check_indexing.py fails the
+  build if a noindex comes back here.
+{%- endcomment -%}
+<!DOCTYPE html>
+<html lang="{{ site.locale | default: 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting&hellip;</title>
+  <meta http-equiv="refresh" content="0; url={{ page.redirect.to | escape }}">
+  <link rel="canonical" href="{{ page.redirect.to | escape }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (function () {
+      var target = {% if page.redirect.to_js %}{{ page.redirect.to_js }}{% else %}{{ page.redirect.to | jsonify }}{% endif %};
+      if (target.indexOf("#") === -1) { target += location.hash; }
+      location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>This page has moved to <a href="{{ page.redirect.to | escape }}">{{ page.redirect.to | escape }}</a>.</p>
+</body>
+</html>
