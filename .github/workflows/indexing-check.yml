@@ -1,0 +1,40 @@
+# Checks the live website after every deploy: each page in sitemap.xml must answer HTTP 200,
+# have no noindex (meta tag or X-Robots-Tag header), have a canonical link to itself and be
+# allowed by robots.txt; each old /kuldeep-prajapat/... address must forward to its new page
+# without noindex. A failure here means search engines can't index something; GitHub emails you.
+name: Check search indexing (live site)
+
+on:
+  workflow_run:
+    workflows: ["Deploy Academic Pages template site to Pages"]
+    types: [completed]
+  workflow_dispatch:
+  # When the checker itself changes, run it on the live site as a report only:
+  # the live site doesn't have the pull request's changes yet, so it never blocks the PR.
+  pull_request:
+    branches: ["master"]
+    paths:
+      - scripts/check_indexing.py
+      - .github/workflows/indexing-check.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexing-check-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live:
+    name: Live site
+    # After a deploy: only when the deploy succeeded (pull request test builds don't deploy).
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+      - name: Check the live website
+        run: python3 scripts/check_indexing.py live https://prajapat-kuldeep.github.io ${{ github.event_name == 'pull_request' && '--warn-only' || '' }}

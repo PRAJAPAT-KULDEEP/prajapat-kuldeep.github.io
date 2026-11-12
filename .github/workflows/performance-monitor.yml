@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Lighthouse CI labels its uploaded report with the current commit; without a checkout
+      # that step failed ("Unable to determine current hash with `git rev-parse HEAD`").
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
       - name: Run Lighthouse on key pages
         uses: treosh/lighthouse-ci-action@v12
         with:
